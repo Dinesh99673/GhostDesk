@@ -143,14 +143,35 @@ check(rejoined.ok === true, 'rejoin with token succeeds');
 check(rejoined.self.participantId === joinedB.self.participantId, 'same participantId after reconnect');
 check(rejoined.snapshot.participants.length === 3, 'no duplicate participant after reconnect');
 
+// 9b. Reload race: a new connection presents the token while the old socket is
+// still connected. Peers must receive a left+joined resync (so they tear down
+// stale WebRTC state) and the old transport must be evicted.
+const seq = [];
+const onLeft = (id) => seq.push(`left:${id}`);
+const onJoined = (p) => seq.push(`joined:${p.participantId}`);
+a.on('participant:left', onLeft);
+a.on('participant:joined', onJoined);
+const b3 = await connect();
+const takeover = await emitAck(b3, 'room:join', { roomId, token: joinedB.token });
+check(takeover.ok === true && takeover.self.participantId === joinedB.self.participantId, 'takeover rejoin keeps the same participant');
+check(takeover.snapshot.participants.length === 3, 'takeover does not duplicate participants');
+await sleep(500);
+const pid = joinedB.self.participantId;
+const leftIdx = seq.indexOf(`left:${pid}`);
+const joinedIdx = seq.indexOf(`joined:${pid}`);
+check(leftIdx !== -1 && joinedIdx !== -1 && leftIdx < joinedIdx, 'peers get left+joined resync on takeover');
+check(b2.connected === false, 'old connection evicted on takeover');
+a.off('participant:left', onLeft);
+a.off('participant:joined', onJoined);
+
 // 10. Invalid room id + bogus token
-const bogus = await emitAck(b2, 'room:join', { roomId: 'x'.repeat(14) });
+const bogus = await emitAck(b3, 'room:join', { roomId: 'x'.repeat(14) });
 check(bogus.ok === false && bogus.error === 'not_found', 'unknown room id rejected as not_found');
 
 // 11. Everyone leaves → grace period → destroyed
 a.emit('room:leave');
 c.emit('room:leave');
-b2.emit('room:leave');
+b3.emit('room:leave');
 console.log(`  ...  waiting out the ${GRACE_MS / 1000}s grace period`);
 await sleep(GRACE_MS + 3000);
 const d = await connect();
@@ -167,7 +188,7 @@ const rescued = await emitAck(e2, 'room:join', { roomId: room2.roomId, token: ro
 check(rescued.ok === true && rescued.self.participantId === room2.self.participantId, 'rejoin within grace period rescues the room');
 e2.emit('room:leave');
 
-for (const s of [a, b2, c, d, e1, e2]) s.close();
+for (const s of [a, b2, b3, c, d, e1, e2]) s.close();
 
 console.log(failures === 0 ? '\nAll smoke checks passed ✅' : `\n${failures} check(s) FAILED ❌`);
 process.exit(failures === 0 ? 0 : 1);

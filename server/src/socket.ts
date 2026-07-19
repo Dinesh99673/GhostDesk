@@ -101,11 +101,13 @@ export function registerSocketHandlers(io: GhostServer, store: RoomStore, limite
         const restored = room.presence.restore(payload.token, socket.id);
         if (restored) {
           const { record, previousSocketId } = restored;
+          const participantId = record.info.participantId;
           const rejoinedFromDormant = previousSocketId === null;
+          // A new connection replaced a still-registered one — e.g. a page
+          // reload whose rejoin raced ahead of the old socket's disconnect.
+          const tookOver = previousSocketId !== null && previousSocketId !== socket.id;
 
-          if (previousSocketId && previousSocketId !== socket.id) {
-            // Same token from a second connection (e.g. duplicated tab): the
-            // newest connection wins; evict the old transport.
+          if (tookOver) {
             const previous = io.sockets.sockets.get(previousSocketId);
             if (previous) {
               previous.data.roomId = undefined;
@@ -115,10 +117,21 @@ export function registerSocketHandlers(io: GhostServer, store: RoomStore, limite
           }
 
           socket.data.roomId = room.roomId;
-          socket.data.participantId = record.info.participantId;
+          socket.data.participantId = participantId;
           socket.join(room.roomId);
           room.lifecycle.cancelDestroy();
-          if (rejoinedFromDormant) {
+
+          if (tookOver) {
+            // Peers still hold WebRTC state bound to the dead connection; a
+            // left/joined resync makes them tear it down before the rejoiner's
+            // fresh offers arrive (per-connection ordering guarantees this).
+            socket.to(room.roomId).emit('participant:left', participantId, 'left');
+            socket.to(room.roomId).emit('whiteboard:pointer', participantId, null);
+            for (const fileId of room.files.removeOffersFrom(participantId)) {
+              socket.to(room.roomId).emit('file:cancel', fileId, participantId);
+            }
+          }
+          if (rejoinedFromDormant || tookOver) {
             socket.to(room.roomId).emit('participant:joined', record.info);
           }
           return ack({
