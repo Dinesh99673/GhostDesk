@@ -1,0 +1,146 @@
+import { useEffect, useRef } from 'react';
+import type { Participant } from '@ghostdesk/shared';
+import { toggleCam, toggleMic } from '../lib/roomController.js';
+import { useGhostStore } from '../lib/store.js';
+
+export function VideoGrid() {
+  const participants = useGhostStore((s) => s.participants);
+  const selfId = useGhostStore((s) => s.selfId);
+  const localStream = useGhostStore((s) => s.localStream);
+  const remoteStreams = useGhostStore((s) => s.remoteStreams);
+  const mediaError = useGhostStore((s) => s.mediaError);
+  const micOn = useGhostStore((s) => s.micOn);
+  const camOn = useGhostStore((s) => s.camOn);
+
+  const others = Object.values(participants)
+    .filter((p) => p.participantId !== selfId)
+    .sort((a, b) => a.joinedAt - b.joinedAt);
+  const self = selfId ? participants[selfId] : undefined;
+  const tileCount = others.length + 1;
+  const cols = tileCount <= 1 ? 1 : tileCount <= 4 ? 2 : 3;
+
+  return (
+    <div className="flex h-full flex-col">
+      {mediaError && (
+        <div className="border-b border-amber-900 bg-amber-950/60 px-4 py-2 text-sm text-amber-300">
+          {mediaError}
+        </div>
+      )}
+      <div
+        className="grid min-h-0 flex-1 gap-3 p-4"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
+        {self && (
+          <VideoTile participant={{ ...self, micOn, camOn }} stream={localStream} muted isSelf />
+        )}
+        {others.map((p) => (
+          <VideoTile
+            key={p.participantId}
+            participant={p}
+            stream={remoteStreams[p.participantId] ?? null}
+            muted={false}
+            isSelf={false}
+          />
+        ))}
+      </div>
+      <div className="flex items-center justify-center gap-3 border-t border-zinc-800 py-3">
+        <ControlButton
+          on={micOn}
+          onClick={toggleMic}
+          labelOn="Mute microphone"
+          labelOff="Unmute microphone"
+          iconOn="🎙️"
+          iconOff="🔇"
+        />
+        <ControlButton
+          on={camOn}
+          onClick={toggleCam}
+          labelOn="Turn camera off"
+          labelOff="Turn camera on"
+          iconOn="📷"
+          iconOff="🚫"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ControlButton({
+  on,
+  onClick,
+  labelOn,
+  labelOff,
+  iconOn,
+  iconOff,
+}: {
+  on: boolean;
+  onClick: () => void;
+  labelOn: string;
+  labelOff: string;
+  iconOn: string;
+  iconOff: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={on ? labelOn : labelOff}
+      className={`flex h-11 w-11 items-center justify-center rounded-full text-lg transition ${
+        on ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-rose-700 hover:bg-rose-600'
+      }`}
+    >
+      {on ? iconOn : iconOff}
+    </button>
+  );
+}
+
+function VideoTile({
+  participant,
+  stream,
+  muted,
+  isSelf,
+}: {
+  participant: Participant;
+  stream: MediaStream | null;
+  muted: boolean;
+  isSelf: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const showVideo = stream !== null && participant.camOn;
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (el && stream && el.srcObject !== stream) {
+      el.srcObject = stream;
+    }
+  }, [stream, showVideo]);
+
+  return (
+    <div className="relative flex items-center justify-center overflow-hidden rounded-xl bg-zinc-900">
+      {showVideo ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={muted}
+          className={`h-full w-full object-cover ${isSelf ? 'scale-x-[-1]' : ''}`}
+        />
+      ) : (
+        <>
+          {/* Camera off: keep the audio flowing through a hidden element. */}
+          {stream && !muted && <video ref={videoRef} autoPlay playsInline className="hidden" />}
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
+            style={{ backgroundColor: participant.color }}
+          >
+            {participant.name.replace(/^Anonymous\s+/i, '').charAt(0).toUpperCase()}
+          </div>
+        </>
+      )}
+      <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-xs">
+        <span>{participant.name}</span>
+        {isSelf && <span className="text-zinc-400">(you)</span>}
+        {!participant.micOn && <span title="Muted">🔇</span>}
+      </div>
+    </div>
+  );
+}
