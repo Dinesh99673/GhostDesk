@@ -65,6 +65,16 @@ check(joinedB.self.participantId !== created.self.participantId, 'distinct parti
 await joinedNotice;
 check(true, 'A notified of B joining');
 
+// A duplicate join from the same socket (e.g. double emit during connection
+// setup) must return the existing participant, not create a ghost.
+const dupJoin = await emitAck(b, 'room:join', { roomId });
+check(
+  dupJoin.ok === true &&
+    dupJoin.self.participantId === joinedB.self.participantId &&
+    dupJoin.snapshot.participants.length === 2,
+  'duplicate join from same socket does not create a ghost participant'
+);
+
 // 3. Chat
 const chatAtB = waitFor(b, 'chat:message');
 a.emit('chat:send', 'hello from A');

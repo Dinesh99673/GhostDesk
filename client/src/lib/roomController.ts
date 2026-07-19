@@ -72,9 +72,9 @@ export function joinRoom(roomId: string): void {
   if (socket.connected) {
     emitJoin(socket, roomId);
   } else {
-    socket.once('connect', () => {
-      if (currentRoomId === roomId) emitJoin(socket, roomId);
-    });
+    // The permanent 'connect' listener performs the join (phase is 'joining').
+    // Registering a second handler here would emit room:join twice and mint a
+    // duplicate "ghost" participant.
     socket.connect();
   }
 }

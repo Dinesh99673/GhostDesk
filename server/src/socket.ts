@@ -80,6 +80,21 @@ export function registerSocketHandlers(io: GhostServer, store: RoomStore, limite
       const room = store.get(payload.roomId);
       if (!room || !room.lifecycle.joinable) return ack({ ok: false, error: 'not_found' });
 
+      // Idempotency: the same socket joining its current room again (duplicate
+      // emit during connection setup) must not mint a second participant.
+      if (socket.data.roomId === room.roomId && socket.data.participantId) {
+        const existing = room.presence.get(socket.data.participantId);
+        if (existing && existing.socketId === socket.id) {
+          return ack({
+            ok: true,
+            roomId: room.roomId,
+            token: { participantId: existing.info.participantId, secret: existing.secret },
+            self: existing.info,
+            snapshot: room.snapshot(),
+          });
+        }
+      }
+
       // Reconnect path: a valid token restores the same participant (identity
       // preserved, no duplicate) and cancels a pending destruction.
       if (payload.token && isValidToken(payload.token)) {
