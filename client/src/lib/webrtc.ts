@@ -17,10 +17,16 @@ interface Peer {
 
 function iceServers(): RTCIceServer[] {
   const servers: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
-  const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
-  if (turnUrl) {
+  // Comma-separated list of TURN urls sharing one credential pair, e.g.
+  // "turn:relay.example.com:80,turns:relay.example.com:443?transport=tcp".
+  // Multiple transports matter: UDP is fastest, TCP/443 gets through strict firewalls.
+  const turnUrls = (import.meta.env.VITE_TURN_URL as string | undefined)
+    ?.split(',')
+    .map((u) => u.trim())
+    .filter(Boolean);
+  if (turnUrls && turnUrls.length > 0) {
     servers.push({
-      urls: turnUrl,
+      urls: turnUrls,
       username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) ?? '',
       credential: (import.meta.env.VITE_TURN_CREDENTIAL as string | undefined) ?? '',
     });
