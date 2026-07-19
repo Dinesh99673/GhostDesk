@@ -173,7 +173,9 @@ async function requestMedia(socket: GhostSocket): Promise<void> {
       audio: { echoCancellation: true, noiseSuppression: true },
     });
     const { micOn, camOn, phase } = useGhostStore.getState();
-    if (phase !== 'joined') {
+    // The user may have left (or the page unmounted) while the permission
+    // prompt was open — release the hardware immediately in that case.
+    if (phase !== 'joined' || currentRoomId === null) {
       stream.getTracks().forEach((t) => t.stop());
       return;
     }
@@ -324,9 +326,18 @@ function fullCleanup(): void {
   notesDoc?.destroy();
 }
 
+/** Releases camera/microphone hardware; the light must go off the moment the
+ * user is no longer in any workspace. */
+function stopLocalMedia(): void {
+  const { localStream } = useGhostStore.getState();
+  localStream?.getTracks().forEach((track) => track.stop());
+  useGhostStore.setState({ localStream: null });
+}
+
 function teardown(socket: GhostSocket, silent: boolean): void {
   socket.emit('room:leave');
   fullCleanup();
+  stopLocalMedia();
   if (!silent) resetRoomState('left');
   currentRoomId = null;
 }
