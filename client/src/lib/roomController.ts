@@ -16,6 +16,7 @@ import {
 import { clearToken, loadToken, saveToken } from './session.js';
 import { getSocket, type GhostSocket } from './socket.js';
 import {
+  addReaction,
   addToast,
   applyWhiteboardRemote,
   resetRoomState,
@@ -315,6 +316,8 @@ function bindListeners(socket: GhostSocket): void {
 
   socket.on('file:cancel', handleCancel);
   socket.on('file:complete', handleComplete);
+
+  socket.on('reaction', addReaction);
 }
 
 function clearTypingTimer(participantId: string): void {
@@ -399,4 +402,8 @@ export function sendWhiteboardDiff(elements: WhiteboardElement[]): void {
 
 export function sendPointer(pointer: PointerPosition | null): void {
   getSocket().emit('whiteboard:pointer', pointer);
+}
+
+export function sendReaction(emoji: string): void {
+  getSocket().emit('reaction:send', emoji);
 }

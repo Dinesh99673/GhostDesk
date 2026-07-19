@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { REACTION_DISPLAY_MS } from '@ghostdesk/shared';
 import type * as Y from 'yjs';
 import type {
   ChatMessage,
@@ -35,6 +36,14 @@ export interface Toast {
   kind: 'info' | 'success' | 'error';
 }
 
+/** A short-lived on-screen call reaction (never stored anywhere). */
+export interface FloatingReaction {
+  id: number;
+  emoji: string;
+  name: string;
+  color: string;
+}
+
 interface GhostState {
   phase: RoomPhase;
   errorCode: RoomError | null;
@@ -62,6 +71,7 @@ interface GhostState {
   whiteboardRemoteTick: number;
   pointers: Record<string, PointerPosition>;
 
+  reactions: FloatingReaction[];
   toasts: Toast[];
 }
 
@@ -85,8 +95,24 @@ export const useGhostStore = create<GhostState>(() => ({
   whiteboardElements: {},
   whiteboardRemoteTick: 0,
   pointers: {},
+  reactions: [],
   toasts: [],
 }));
+
+let reactionSeq = 1;
+export function addReaction(participantId: string, emoji: string): void {
+  const sender = useGhostStore.getState().participants[participantId];
+  const id = reactionSeq++;
+  useGhostStore.setState((s) => ({
+    reactions: [
+      ...s.reactions,
+      { id, emoji, name: sender?.name ?? 'Someone', color: sender?.color ?? '#a1a1aa' },
+    ],
+  }));
+  setTimeout(() => {
+    useGhostStore.setState((s) => ({ reactions: s.reactions.filter((r) => r.id !== id) }));
+  }, REACTION_DISPLAY_MS);
+}
 
 let toastSeq = 1;
 export function addToast(text: string, kind: Toast['kind'] = 'info'): void {
@@ -164,5 +190,6 @@ export function resetRoomState(phase: RoomPhase): void {
     whiteboardElements: {},
     whiteboardRemoteTick: 0,
     pointers: {},
+    reactions: [],
   });
 }

@@ -68,6 +68,8 @@ export interface ClientToServerEvents {
   'file:cancel': (fileId: string) => void;
   'file:complete': (fileId: string) => void;
 
+  'reaction:send': (emoji: string) => void;
+
   heartbeat: () => void;
 }
 
@@ -97,6 +99,9 @@ export interface ServerToClientEvents {
   /** byId is the participant who cancelled; also used when an offer is withdrawn (sender left). */
   'file:cancel': (fileId: string, byId: string) => void;
   'file:complete': (fileId: string, receiverId: string) => void;
+
+  /** Ephemeral call reaction — displayed for a few seconds, never stored. */
+  reaction: (participantId: string, emoji: string) => void;
 
   'heartbeat:ack': () => void;
 }

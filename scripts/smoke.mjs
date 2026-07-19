@@ -133,6 +133,12 @@ a.emit('heartbeat');
 await hb;
 check(true, 'heartbeat acked');
 
+// Reactions relay to the whole room (including the sender) and are never stored.
+const reactionAtB = waitFor(b, 'reaction');
+a.emit('reaction:send', '👍');
+const [reactFrom, reactEmoji] = await reactionAtB;
+check(reactFrom === created.self.participantId && reactEmoji === '👍', 'reaction relayed to room');
+
 // 9. Reconnect with token restores identity (no duplicate participant)
 b.disconnect();
 const leftNotice = await waitFor(a, 'participant:left');

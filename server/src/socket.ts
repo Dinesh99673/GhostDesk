@@ -2,6 +2,7 @@ import {
   isValidFileOffer,
   isValidRoomId,
   isValidToken,
+  REACTION_EMOJIS,
   sanitizeChatText,
   sanitizeName,
   type FileOffer,
@@ -280,6 +281,18 @@ export function registerSocketHandlers(io: GhostServer, store: RoomStore, limite
     relayToSender('file:accept');
     relayToSender('file:reject');
     relayToSender('file:complete');
+
+    // Reactions are relayed, never stored; a small per-socket throttle stops spam.
+    let lastReactionAt = 0;
+    socket.on('reaction:send', (emoji) => {
+      const ctx = context(store, socket);
+      if (!ctx || typeof emoji !== 'string') return;
+      if (!(REACTION_EMOJIS as readonly string[]).includes(emoji)) return;
+      const now = Date.now();
+      if (now - lastReactionAt < 250) return;
+      lastReactionAt = now;
+      io.to(ctx.room.roomId).emit('reaction', ctx.participantId, emoji);
+    });
 
     socket.on('file:cancel', (fileId) => {
       const ctx = context(store, socket);

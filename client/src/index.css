@@ -53,6 +53,27 @@ body {
   animation: ghost-float 3.5s ease-in-out infinite;
 }
 
+@keyframes reaction-float {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.5);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-45vh) scale(1.1);
+  }
+}
+.reaction-float {
+  animation: reaction-float 3s ease-out forwards;
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
