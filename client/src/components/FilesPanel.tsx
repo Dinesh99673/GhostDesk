@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { MAX_FILE_BYTES } from '@ghostdesk/shared';
+import { MAX_FILE_BYTES, type FileOffer } from '@ghostdesk/shared';
 import {
   acceptOffer,
   cancelReceive,
@@ -94,7 +94,12 @@ export function FilesPanel() {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Transfers</h3>
           <div className="space-y-2">
             {transferList.map((t) => (
-              <TransferRow key={t.key} transfer={t} peerName={participants[t.peerId]?.name} />
+              <TransferRow
+                key={t.key}
+                transfer={t}
+                peerName={participants[t.peerId]?.name}
+                retryOffer={t.direction === 'receive' ? fileOffers[t.fileId] : undefined}
+              />
             ))}
           </div>
         </div>
@@ -109,9 +114,19 @@ export function FilesPanel() {
   );
 }
 
-function TransferRow({ transfer: t, peerName }: { transfer: Transfer; peerName?: string }) {
+function TransferRow({
+  transfer: t,
+  peerName,
+  retryOffer,
+}: {
+  transfer: Transfer;
+  peerName?: string;
+  retryOffer?: FileOffer;
+}) {
   const pct = t.size > 0 ? Math.min(100, Math.round((t.bytes / t.size) * 100)) : 0;
   const active = t.status === 'active' || t.status === 'waiting';
+  // Re-download works as long as the sender still offers the file.
+  const canRetry = (t.status === 'cancelled' || t.status === 'error') && retryOffer !== undefined;
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -147,6 +162,14 @@ function TransferRow({ transfer: t, peerName }: { transfer: Transfer; peerName?:
           >
             Save file
           </a>
+        )}
+        {canRetry && (
+          <button
+            onClick={() => acceptOffer(retryOffer)}
+            className="rounded-md bg-violet-600 px-2.5 py-1 text-xs font-semibold hover:bg-violet-500"
+          >
+            Download again
+          </button>
         )}
       </div>
     </div>
