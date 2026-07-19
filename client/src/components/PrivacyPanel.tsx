@@ -9,6 +9,7 @@ const SIGNALS = [
   ['No recordings', 'Nothing in this room is recorded or logged — by design there is nowhere to store it.'],
   ['No server-side file storage', 'Files move browser-to-browser and never touch a server disk.'],
   ['Auto-destroy enabled', `When the last person leaves, everything is erased after a ${GRACE_PERIOD_MS / 1000}-second grace period.`],
+  ['Code runs leave the room', 'One exception: clicking ▶ Run in the code editor sends that code to the public Compiler Explorer API (godbolt.org) for execution. Everything else stays here.'],
 ] as const;
 
 /** The trust-signal dashboard — GhostDesk's privacy story, live. */

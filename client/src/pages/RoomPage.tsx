@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { isValidRoomId, type RoomError } from '@ghostdesk/shared';
 import { ChatPanel } from '../components/ChatPanel.js';
+import { CodeEditorPanel } from '../components/CodeEditorPanel.js';
 import { FilesPanel } from '../components/FilesPanel.js';
 import { NotesPanel } from '../components/NotesPanel.js';
 import { PrivacyPanel } from '../components/PrivacyPanel.js';
@@ -12,7 +13,7 @@ import { joinRoom, unmountRoom } from '../lib/roomController.js';
 import { useGhostStore } from '../lib/store.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
 
-type MainTab = 'call' | 'whiteboard' | 'notes';
+type MainTab = 'call' | 'whiteboard' | 'notes' | 'code';
 type SideTab = 'chat' | 'files' | 'privacy';
 type PanelTab = MainTab | SideTab;
 
@@ -76,6 +77,7 @@ function DesktopShell() {
               label="🖊️ Whiteboard"
             />
             <TabButton active={mainTab === 'notes'} onClick={() => setMainTab('notes')} label="📝 Notes" />
+            <TabButton active={mainTab === 'code'} onClick={() => setMainTab('code')} label="💻 Code" />
           </nav>
           <div className="min-h-0 flex-1">
             {/* The call stays mounted while hidden so remote audio keeps playing on other tabs. */}
@@ -84,6 +86,7 @@ function DesktopShell() {
             </div>
             {mainTab === 'whiteboard' && <WhiteboardPanel />}
             {mainTab === 'notes' && <NotesPanel />}
+            {mainTab === 'code' && <CodeEditorPanel />}
           </div>
         </main>
         <aside className="flex w-80 shrink-0 flex-col border-l border-zinc-800">
@@ -115,6 +118,7 @@ function MobileShell() {
         <TabButton active={tab === 'chat'} onClick={() => setTab('chat')} label="💬 Chat" />
         <TabButton active={tab === 'whiteboard'} onClick={() => setTab('whiteboard')} label="🖊️ Board" />
         <TabButton active={tab === 'notes'} onClick={() => setTab('notes')} label="📝 Notes" />
+        <TabButton active={tab === 'code'} onClick={() => setTab('code')} label="💻 Code" />
         <TabButton active={tab === 'files'} onClick={() => setTab('files')} label="📁 Files" />
         <TabButton active={tab === 'privacy'} onClick={() => setTab('privacy')} label="🛡️ Privacy" />
       </nav>
@@ -126,6 +130,7 @@ function MobileShell() {
         {tab === 'chat' && <ChatPanel />}
         {tab === 'whiteboard' && <WhiteboardPanel />}
         {tab === 'notes' && <NotesPanel />}
+        {tab === 'code' && <CodeEditorPanel />}
         {tab === 'files' && <FilesPanel />}
         {tab === 'privacy' && <PrivacyPanel />}
       </div>
@@ -174,6 +179,7 @@ function CenterScreen({
 const DESTRUCTION_STAGES = [
   'Chat deleted',
   'Notes deleted',
+  'Code deleted',
   'Whiteboard deleted',
   'Participants removed',
 ] as const;
