@@ -5,6 +5,12 @@ import { runCode, RunError, type RunResult } from '../lib/codeRunner.js';
 import { DEFAULT_LANGUAGE_ID, getLanguage, LANGUAGES } from '../lib/languages.js';
 import { addToast, useGhostStore } from '../lib/store.js';
 
+/** True when the text is empty or still one of the untouched starter snippets. */
+const isStockSnippet = (text: string) => {
+  const trimmed = text.trim();
+  return trimmed === '' || LANGUAGES.some((l) => l.hello.trim() === trimmed);
+};
+
 /**
  * Collaborative code editor: a CodeMirror instance bound to a Y.Text ("code")
  * in the shared room doc, so it syncs over the existing notes:update channel.
@@ -50,6 +56,11 @@ export function CodeEditorPanel() {
       if (cancelled || !hostRef.current) return;
       const compartment = new Comp();
       const ytext = doc.getText('code');
+      // Seed a hello-world starter into a brand-new editor. Only this client
+      // writes it — the insert reaches peers through the normal Yjs sync.
+      if (ytext.toString().trim() === '') {
+        doc.transact(() => ytext.insert(0, initial.hello));
+      }
       view = new View({
         doc: ytext.toString(),
         extensions: [
@@ -97,7 +108,18 @@ export function CodeEditorPanel() {
   const currentCode = () => viewRef.current?.state.doc.toString() ?? doc?.getText('code').toString() ?? '';
 
   const onSelectLanguage = (id: string) => {
-    doc?.getMap('codeMeta').set('language', id);
+    if (!doc) return;
+    const ytext = doc.getText('code');
+    doc.transact(() => {
+      doc.getMap('codeMeta').set('language', id);
+      // Swap the starter snippet along with the language — but never touch
+      // code someone actually wrote. Only the initiating client writes; the
+      // replacement reaches peers through the normal Yjs sync.
+      if (isStockSnippet(ytext.toString())) {
+        ytext.delete(0, ytext.length);
+        ytext.insert(0, getLanguage(id).hello);
+      }
+    });
   };
 
   const onRun = async () => {
