@@ -85,8 +85,26 @@ One web service runs everything: Express serves the built client and hosts Socke
   dependencies that Vite's build needs)
 - **Start command:** `npm run start`
 - **Env vars:** `NODE_ENV=production` (Render sets `PORT` automatically)
-- Optional TURN relay for restrictive networks, set at **build** time for the client:
-  `VITE_TURN_URL`, `VITE_TURN_USERNAME`, `VITE_TURN_CREDENTIAL`
+
+### TURN relay (recommended for cross-network calls)
+
+STUN alone can't connect peers behind symmetric/carrier-grade NAT — common on
+mobile data. A TURN server relays the (still end-to-end encrypted) traffic when
+no direct path exists; WebRTC only falls back to it when needed. Free tiers from
+providers like [Metered](https://www.metered.ca/) or Cloudflare are plenty for
+small deployments.
+
+Set these at **build** time for the client (Vite bakes them into the bundle, so
+redeploy after changing them):
+
+```
+VITE_TURN_URL=turn:<host>:80,turn:<host>:80?transport=tcp,turn:<host>:443,turns:<host>:443?transport=tcp
+VITE_TURN_USERNAME=<username>
+VITE_TURN_CREDENTIAL=<credential>
+```
+
+`VITE_TURN_URL` accepts a comma-separated list sharing one credential pair —
+the UDP/TCP/443/TLS variants each get through a different kind of firewall.
 
 Or use the included [render.yaml](render.yaml) blueprint.
 
