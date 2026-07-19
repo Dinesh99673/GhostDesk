@@ -3,21 +3,23 @@
 > *Collaborate freely. Leave nothing behind.*
 
 GhostDesk is a privacy-first, disposable collaborative workspace. Create a room, share the
-link, collaborate — video calls, chat, shared notes, a whiteboard, and peer-to-peer file
-sharing. When the last participant leaves, the entire workspace is **permanently destroyed**
-after a 30-second grace period.
+link, collaborate — video calls with live emoji reactions, chat, shared notes, a
+collaborative code editor, a whiteboard, and peer-to-peer file sharing. When the last
+participant leaves, the entire workspace is **permanently destroyed** after a 30-second
+grace period.
 
 - **No signup** — you're in a room two clicks after landing.
 - **Anonymous** — everyone gets an auto-generated identity (*Anonymous Fox*, *Anonymous Owl*…),
   optionally renameable.
 - **Nothing persists** — all room state lives in server RAM; destruction is deletion.
   Video/audio and files travel peer-to-peer over encrypted WebRTC and never touch the server.
+- **Works on phones** — a dedicated mobile layout with the full feature set.
 
 ## Architecture
 
 ```
 GhostDesk/
-├── client/   React 19 + Vite + Tailwind 4 + Excalidraw + Yjs + socket.io-client
+├── client/   React 19 + Vite + Tailwind 4 + Excalidraw + CodeMirror 6 + Yjs + socket.io-client
 ├── server/   Node + Express + Socket.IO (in-memory state, modular managers)
 ├── shared/   Single source of truth: event contract, types, constants, validation
 └── scripts/  smoke.mjs — end-to-end Socket.IO contract test
@@ -30,7 +32,13 @@ GhostDesk/
   `WhiteboardManager`, `FileTransferManager`, and `LifecycleManager`
   (`ACTIVE → DESTROYING → DESTROYED`), plus a 60 s safety-net cleanup sweep.
 - **Calls:** full-mesh WebRTC with perfect negotiation. Hard cap 6 people per room.
-- **Notes:** Yjs CRDT — conflict-free simultaneous editing.
+- **Notes:** Yjs CRDT — conflict-free simultaneous editing, with one-click **PDF export**
+  generated entirely in the browser (jsPDF) so notes never leave the room.
+- **Code editor:** CodeMirror 6 bound to the same Yjs document (`y-codemirror.next`) —
+  true collaborative editing with a synced language picker. One-click ▶ Run executes via
+  the public Compiler Explorer API — the only action that sends data outside the room,
+  and the UI says so.
+- **Reactions:** Meet-style floating emoji over the call, relayed live and never stored.
 - **Whiteboard:** Excalidraw with incremental element-diff sync (~100 ms throttle),
   reconciled by element version.
 - **Files:** offered via socket, transferred in 64 KB chunks over WebRTC data channels with
@@ -90,12 +98,13 @@ Or use the included [render.yaml](render.yaml) blueprint.
 ## Demo flow
 
 1. Create a workspace → copy the invite link.
-2. A friend opens the link → video call connects, anonymous identities appear.
-3. Chat, draw on the whiteboard, and type notes simultaneously.
-4. Share a file — watch it stream peer-to-peer.
-5. Check the 🛡️ Privacy tab: workspace age, live trust signals.
-6. Both leave → 30 seconds later the room is gone.
-7. Reopen the link: *"Workspace permanently destroyed"* — with the staged deletion replay.
+2. A friend opens the link (desktop or phone) → video call connects, anonymous identities appear.
+3. Chat, draw on the whiteboard, type notes simultaneously, and code together — then hit ▶ Run.
+4. Share a file — watch it stream peer-to-peer. Send a 🎉 reaction.
+5. Export the notes as a PDF, generated locally in the browser.
+6. Check the 🛡️ Privacy tab: workspace age, live trust signals.
+7. Both leave → 30 seconds later the room is gone.
+8. Reopen the link: *"Workspace permanently destroyed"* — with the staged deletion replay.
 
 ## Security notes
 
