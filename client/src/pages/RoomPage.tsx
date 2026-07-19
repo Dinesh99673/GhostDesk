@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { isValidRoomId, type RoomError } from '@ghostdesk/shared';
+import { isValidRoomId, MAX_PARTICIPANTS, type RoomError } from '@ghostdesk/shared';
 import { ChatPanel } from '../components/ChatPanel.js';
 import { CodeEditorPanel } from '../components/CodeEditorPanel.js';
 import { FilesPanel } from '../components/FilesPanel.js';
@@ -238,7 +238,7 @@ function DestroyedScreen() {
 function ErrorScreen({ code, onRetry }: { code: RoomError | null; onRetry: () => void }) {
   const message =
     code === 'full'
-      ? 'This workspace is full — a room holds at most 10 people.'
+      ? `This workspace is full — a room holds at most ${MAX_PARTICIPANTS} people.`
       : code === 'rate_limited'
         ? 'Too many attempts — wait a moment and try again.'
         : 'Something went wrong while joining.';

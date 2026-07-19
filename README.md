@@ -29,7 +29,7 @@ GhostDesk/
 - **Server managers:** each `Room` composes `PresenceManager`, `ChatManager`, `NotesManager`,
   `WhiteboardManager`, `FileTransferManager`, and `LifecycleManager`
   (`ACTIVE → DESTROYING → DESTROYED`), plus a 60 s safety-net cleanup sweep.
-- **Calls:** full-mesh WebRTC with perfect negotiation. Recommended 2–6 people, hard cap 10.
+- **Calls:** full-mesh WebRTC with perfect negotiation. Hard cap 6 people per room.
 - **Notes:** Yjs CRDT — conflict-free simultaneous editing.
 - **Whiteboard:** Excalidraw with incremental element-diff sync (~100 ms throttle),
   reconciled by element version.
@@ -40,7 +40,7 @@ GhostDesk/
 
 ### Memory caps (fits a 512 MB instance)
 
-Max 50 rooms · 10 participants/room · chat 500 msgs or 1 MB · notes 1 MB ·
+Max 50 rooms · 6 participants/room · chat 500 msgs or 1 MB · notes 1 MB ·
 whiteboard 5 MB / 5000 elements. Oldest chat messages are trimmed automatically.
 
 ## Development

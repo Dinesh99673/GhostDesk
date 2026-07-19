@@ -194,7 +194,25 @@ const rescued = await emitAck(e2, 'room:join', { roomId: room2.roomId, token: ro
 check(rescued.ok === true && rescued.self.participantId === room2.self.participantId, 'rejoin within grace period rescues the room');
 e2.emit('room:leave');
 
-for (const s of [a, b2, b3, c, d, e1, e2]) s.close();
+// 13. Participant cap: with 6 people in a room, the 7th is rejected as "full".
+const capOwner = await connect();
+const capRoom = await emitAck(capOwner, 'room:create');
+const capSockets = [capOwner];
+let fillOk = capRoom.ok === true;
+for (let i = 0; i < 5; i++) {
+  const s = await connect();
+  const j = await emitAck(s, 'room:join', { roomId: capRoom.roomId });
+  fillOk = fillOk && j.ok === true;
+  capSockets.push(s);
+}
+check(fillOk, 'room fills up to 6 participants');
+const seventh = await connect();
+const overflow = await emitAck(seventh, 'room:join', { roomId: capRoom.roomId });
+check(overflow.ok === false && overflow.error === 'full', '7th participant rejected with "full"');
+for (const s of capSockets) s.emit('room:leave');
+capSockets.push(seventh);
+
+for (const s of [a, b2, b3, c, d, e1, e2, ...capSockets]) s.close();
 
 console.log(failures === 0 ? '\nAll smoke checks passed ✅' : `\n${failures} check(s) FAILED ❌`);
 process.exit(failures === 0 ? 0 : 1);

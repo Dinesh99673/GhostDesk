@@ -1,8 +1,9 @@
 export const ROOM_ID_LENGTH = 14;
 
 export const MAX_ROOMS = 50;
-export const MAX_PARTICIPANTS = 10;
-export const RECOMMENDED_PARTICIPANTS = 6;
+// Hard cap per room: full-mesh WebRTC video degrades sharply beyond this,
+// since every participant uploads their stream to every other participant.
+export const MAX_PARTICIPANTS = 6;
 
 export const MAX_CHAT_MESSAGES = 500;
 export const MAX_CHAT_TOTAL_BYTES = 1024 * 1024; // 1 MB per room, whichever cap hits first
