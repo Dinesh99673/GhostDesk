@@ -10,9 +10,11 @@ import { VideoGrid } from '../components/VideoGrid.js';
 import { WhiteboardPanel } from '../components/WhiteboardPanel.js';
 import { joinRoom, unmountRoom } from '../lib/roomController.js';
 import { useGhostStore } from '../lib/store.js';
+import { useIsMobile } from '../lib/useIsMobile.js';
 
 type MainTab = 'call' | 'whiteboard' | 'notes';
 type SideTab = 'chat' | 'files' | 'privacy';
+type PanelTab = MainTab | SideTab;
 
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -53,6 +55,11 @@ export function RoomPage() {
 }
 
 function RoomShell() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileShell /> : <DesktopShell />;
+}
+
+function DesktopShell() {
   const [mainTab, setMainTab] = useState<MainTab>('call');
   const [sideTab, setSideTab] = useState<SideTab>('chat');
 
@@ -71,7 +78,10 @@ function RoomShell() {
             <TabButton active={mainTab === 'notes'} onClick={() => setMainTab('notes')} label="📝 Notes" />
           </nav>
           <div className="min-h-0 flex-1">
-            {mainTab === 'call' && <VideoGrid />}
+            {/* The call stays mounted while hidden so remote audio keeps playing on other tabs. */}
+            <div className={mainTab === 'call' ? 'h-full' : 'hidden'}>
+              <VideoGrid />
+            </div>
             {mainTab === 'whiteboard' && <WhiteboardPanel />}
             {mainTab === 'notes' && <NotesPanel />}
           </div>
@@ -93,11 +103,41 @@ function RoomShell() {
   );
 }
 
+/** Single-panel layout for phones and small tablets: one tab bar, one panel at a time. */
+function MobileShell() {
+  const [tab, setTab] = useState<PanelTab>('call');
+
+  return (
+    <div className="flex h-full flex-col">
+      <RoomHeader />
+      <nav className="no-scrollbar flex gap-1 overflow-x-auto border-b border-zinc-800 px-2 pt-2">
+        <TabButton active={tab === 'call'} onClick={() => setTab('call')} label="🎥 Call" />
+        <TabButton active={tab === 'chat'} onClick={() => setTab('chat')} label="💬 Chat" />
+        <TabButton active={tab === 'whiteboard'} onClick={() => setTab('whiteboard')} label="🖊️ Board" />
+        <TabButton active={tab === 'notes'} onClick={() => setTab('notes')} label="📝 Notes" />
+        <TabButton active={tab === 'files'} onClick={() => setTab('files')} label="📁 Files" />
+        <TabButton active={tab === 'privacy'} onClick={() => setTab('privacy')} label="🛡️ Privacy" />
+      </nav>
+      <div className="min-h-0 flex-1">
+        {/* The call stays mounted while hidden so remote audio keeps playing on other tabs. */}
+        <div className={tab === 'call' ? 'h-full' : 'hidden'}>
+          <VideoGrid />
+        </div>
+        {tab === 'chat' && <ChatPanel />}
+        {tab === 'whiteboard' && <WhiteboardPanel />}
+        {tab === 'notes' && <NotesPanel />}
+        {tab === 'files' && <FilesPanel />}
+        {tab === 'privacy' && <PrivacyPanel />}
+      </div>
+    </div>
+  );
+}
+
 function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-t-lg px-4 py-2 text-sm font-medium transition ${
+      className={`shrink-0 whitespace-nowrap rounded-t-lg px-3 py-2 text-sm font-medium transition sm:px-4 ${
         active ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
       }`}
     >

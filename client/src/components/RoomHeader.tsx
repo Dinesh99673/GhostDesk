@@ -16,7 +16,7 @@ export function RoomHeader() {
   };
 
   return (
-    <header className="flex items-center gap-4 border-b border-zinc-800 px-4 py-2.5">
+    <header className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-b border-zinc-800 px-3 py-2 sm:gap-4 sm:px-4 sm:py-2.5">
       <div className="flex items-center gap-2 font-bold">
         <span aria-hidden>👻</span>
         Ghost<span className="text-violet-400">Desk</span>
@@ -24,19 +24,20 @@ export function RoomHeader() {
       <WorkspaceAge />
       <div className="flex-1" />
       <ParticipantBar />
-      <span className="text-sm text-zinc-500">
+      <span className="hidden text-sm text-zinc-500 md:inline">
         {count} {count === 1 ? 'person' : 'people'}
       </span>
       <button
         onClick={copyLink}
-        className="rounded-lg bg-violet-600 px-3.5 py-1.5 text-sm font-semibold hover:bg-violet-500"
+        className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold hover:bg-violet-500 sm:px-3.5"
       >
-        Copy invite link
+        <span className="sm:hidden">Invite</span>
+        <span className="hidden sm:inline">Copy invite link</span>
       </button>
       <button
         onClick={leaveRoom}
         title="Last one out destroys the room"
-        className="rounded-lg border border-rose-800 px-3.5 py-1.5 text-sm font-semibold text-rose-400 hover:bg-rose-950"
+        className="rounded-lg border border-rose-800 px-3 py-1.5 text-sm font-semibold text-rose-400 hover:bg-rose-950 sm:px-3.5"
       >
         Leave
       </button>
@@ -114,7 +115,7 @@ function RenameSelf() {
         setEditing(true);
       }}
       title="Click to rename yourself"
-      className="max-w-36 truncate rounded-lg border border-zinc-800 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-600"
+      className="max-w-24 truncate rounded-lg border border-zinc-800 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-600 sm:max-w-36"
     >
       {self.name} ✎
     </button>

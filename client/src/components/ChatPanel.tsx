@@ -81,7 +81,7 @@ export function ChatPanel() {
           onChange={(e) => onInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder="Say something…"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-violet-600"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-base outline-none focus:border-violet-600 sm:text-sm"
         />
         <button
           onClick={submit}

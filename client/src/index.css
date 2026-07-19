@@ -33,6 +33,13 @@ body {
   background: transparent;
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes ghost-float {
   0%,
   100% {

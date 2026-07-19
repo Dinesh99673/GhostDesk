@@ -17,7 +17,15 @@ export function VideoGrid() {
     .sort((a, b) => a.joinedAt - b.joinedAt);
   const self = selfId ? participants[selfId] : undefined;
   const tileCount = others.length + 1;
-  const cols = tileCount <= 1 ? 1 : tileCount <= 4 ? 2 : 3;
+  // Portrait screens stack tiles so they stay wide; landscape/desktop spreads them out.
+  const gridCols =
+    tileCount <= 1
+      ? 'grid-cols-1'
+      : tileCount === 2
+        ? 'grid-cols-1 landscape:grid-cols-2'
+        : tileCount <= 4
+          ? 'grid-cols-2'
+          : 'grid-cols-2 landscape:grid-cols-3';
 
   return (
     <div className="flex h-full flex-col">
@@ -26,10 +34,7 @@ export function VideoGrid() {
           {mediaError}
         </div>
       )}
-      <div
-        className="grid min-h-0 flex-1 gap-3 p-4"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      >
+      <div className={`grid min-h-0 flex-1 auto-rows-fr gap-2 p-2 sm:gap-3 sm:p-4 ${gridCols}`}>
         {self && (
           <VideoTile participant={{ ...self, micOn, camOn }} stream={localStream} muted isSelf />
         )}
@@ -43,7 +48,7 @@ export function VideoGrid() {
           />
         ))}
       </div>
-      <div className="flex items-center justify-center gap-3 border-t border-zinc-800 py-3">
+      <div className="flex items-center justify-center gap-3 border-t border-zinc-800 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <ControlButton
           on={micOn}
           onClick={toggleMic}
@@ -129,7 +134,7 @@ function VideoTile({
           {/* Camera off: keep the audio flowing through a hidden element. */}
           {stream && !muted && <video ref={videoRef} autoPlay playsInline className="hidden" />}
           <div
-            className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
+            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white sm:h-20 sm:w-20 sm:text-2xl"
             style={{ backgroundColor: participant.color }}
           >
             {participant.name.replace(/^Anonymous\s+/i, '').charAt(0).toUpperCase()}
