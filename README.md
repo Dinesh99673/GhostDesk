@@ -72,7 +72,9 @@ node scripts/smoke.mjs
 
 One web service runs everything: Express serves the built client and hosts Socket.IO.
 
-- **Build command:** `npm install && npm run build`
+- **Build command:** `npm install --include=dev && npm run build`
+  (the `--include=dev` matters: `NODE_ENV=production` makes npm skip the dev
+  dependencies that Vite's build needs)
 - **Start command:** `npm run start`
 - **Env vars:** `NODE_ENV=production` (Render sets `PORT` automatically)
 - Optional TURN relay for restrictive networks, set at **build** time for the client:
