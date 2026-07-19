@@ -87,7 +87,13 @@ function emitJoin(socket: GhostSocket, roomId: string): void {
       useGhostStore.setState({ phase, errorCode: result.error });
       return;
     }
-    onJoined(socket, result);
+    try {
+      onJoined(socket, result);
+    } catch (err) {
+      // Never strand the user on the joining screen: surface a retryable error.
+      console.error('Failed to process room snapshot', err);
+      useGhostStore.setState({ phase: 'error', errorCode: null });
+    }
   });
 }
 
@@ -102,7 +108,10 @@ function onJoined(socket: GhostSocket, joined: JoinedRoom): void {
   }
 
   const doc = new Y.Doc();
-  if (joined.snapshot.notes) Y.applyUpdate(doc, joined.snapshot.notes, REMOTE_ORIGIN);
+  // Socket.IO delivers binary as ArrayBuffer; Yjs requires Uint8Array.
+  if (joined.snapshot.notes) {
+    Y.applyUpdate(doc, new Uint8Array(joined.snapshot.notes), REMOTE_ORIGIN);
+  }
   doc.on('update', (update: Uint8Array, origin: unknown) => {
     if (origin !== REMOTE_ORIGIN) socket.emit('notes:update', update);
   });
