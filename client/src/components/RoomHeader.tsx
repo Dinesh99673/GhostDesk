@@ -7,6 +7,7 @@ export function RoomHeader() {
   const participants = useGhostStore((s) => s.participants);
   const selfId = useGhostStore((s) => s.selfId);
   const count = Object.keys(participants).length;
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
 
   const copyLink = () => {
     void navigator.clipboard
@@ -35,14 +36,76 @@ export function RoomHeader() {
         <span className="hidden sm:inline">Copy invite link</span>
       </button>
       <button
-        onClick={leaveRoom}
+        onClick={() => setConfirmingLeave(true)}
         title="Last one out destroys the room"
         className="rounded-lg border border-rose-800 px-3 py-1.5 text-sm font-semibold text-rose-400 hover:bg-rose-950 sm:px-3.5"
       >
         Leave
       </button>
       {selfId && <RenameSelf key={selfId} />}
+      {confirmingLeave && (
+        <LeaveConfirmDialog
+          lastPerson={count === 1}
+          onCancel={() => setConfirmingLeave(false)}
+          onConfirm={leaveRoom}
+        />
+      )}
     </header>
+  );
+}
+
+function LeaveConfirmDialog({
+  lastPerson,
+  onCancel,
+  onConfirm,
+}: {
+  lastPerson: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Leave the workspace?"
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 text-left shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-bold">Leave the workspace?</h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          {lastPerson
+            ? "You're the last one here — the room and everything in it self-destructs 30 seconds after you leave."
+            : 'You can rejoin with the invite link while the room is still alive.'}
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            autoFocus
+            onClick={onCancel}
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold hover:bg-zinc-900"
+          >
+            Stay
+          </button>
+          <button
+            onClick={onConfirm}
+            className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold hover:bg-rose-600"
+          >
+            Leave
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
