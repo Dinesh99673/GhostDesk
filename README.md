@@ -33,8 +33,8 @@ GhostDesk/
 - **Notes:** Yjs CRDT — conflict-free simultaneous editing.
 - **Whiteboard:** Excalidraw with incremental element-diff sync (~100 ms throttle),
   reconciled by element version.
-- **Files:** offered via socket, transferred in 16 KB chunks over WebRTC data channels with
-  backpressure. Per-file cap 100 MB. Never stored server-side.
+- **Files:** offered via socket, transferred in 64 KB chunks over WebRTC data channels with
+  backpressure. Per-file cap 10 MB. Never stored server-side.
 - **Reconnection:** a participant token in `sessionStorage` restores your identity on
   refresh — no duplicate participants, and rejoining within the grace period rescues a room.
 

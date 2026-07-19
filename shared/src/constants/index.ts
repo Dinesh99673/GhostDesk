@@ -13,8 +13,10 @@ export const MAX_WHITEBOARD_BYTES = 5 * 1024 * 1024;
 export const MAX_WHITEBOARD_ELEMENTS = 5000;
 export const WHITEBOARD_THROTTLE_MS = 100;
 
-export const MAX_FILE_BYTES = 100 * 1024 * 1024;
-export const FILE_CHUNK_BYTES = 16 * 1024;
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+// 64 KB is the safe cross-browser ceiling for data-channel messages; larger
+// chunks mean far fewer per-chunk round trips than the old 16 KB.
+export const FILE_CHUNK_BYTES = 64 * 1024;
 // Pause sending when the data channel buffer exceeds this; resume at bufferedAmountLow.
 export const FILE_BUFFER_HIGH_WATER = 1024 * 1024;
 export const FILE_BUFFER_LOW_WATER = 256 * 1024;
@@ -25,3 +27,7 @@ export const GRACE_PERIOD_MS = 30_000;
 export const CLEANUP_INTERVAL_MS = 60_000;
 
 export const MAX_NAME_CHARS = 24;
+
+/** Allowed call reactions; anything else is rejected server-side. */
+export const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎉', '👏', '😢', '🔥'] as const;
+export const REACTION_DISPLAY_MS = 3000;

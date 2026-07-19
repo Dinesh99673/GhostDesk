@@ -7,7 +7,7 @@ const FEATURES = [
   ['🎥', 'Video & audio calls', 'Encrypted peer-to-peer WebRTC — media never touches the server.'],
   ['💬', 'Chat & notes', 'Real-time chat and conflict-free collaborative notes.'],
   ['🖊️', 'Whiteboard', 'Sketch together on a shared Excalidraw canvas.'],
-  ['📁', 'File sharing', 'Files transfer directly between browsers. Up to 100 MB.'],
+  ['📁', 'File sharing', 'Files transfer directly between browsers. Up to 10 MB.'],
 ] as const;
 
 const PRINCIPLES = [
